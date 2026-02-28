@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vimflix – Movies, Series & Anime</title>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <script src="https://cdn.tailwindcss.com" defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" /></noscript>
+  <style>
+    :root { --vimflix-bg: #0a0a0c; --vimflix-card: #141419; --vimflix-brand: #e50914; --vimflix-muted: #6b7280; }
+    body { background: var(--vimflix-bg); color: #f4f4f5; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .poster { background: linear-gradient(145deg, #1c1b22 0%, #252330 50%, #1a1920 100%); }
+    .hero-poster { aspect-ratio: 16/9; }
+    .trend-card { min-width: 150px; }
+    .scroll-x { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; scrollbar-color: #374151 var(--vimflix-bg); -webkit-overflow-scrolling: touch; }
+    .scroll-x::-webkit-scrollbar { height: 5px; }
+    .scroll-x::-webkit-scrollbar-track { background: var(--vimflix-bg); }
+    .scroll-x::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    .section-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+    .genre-pill { transition: background 0.15s, color 0.15s; }
+    .genre-pill.active { background: var(--vimflix-brand); color: #fff; }
+    .card-hover { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .card-hover:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+    .tab-pill.active { background: rgba(255,255,255,0.12); color: #fff; }
+    .vimflix-logo { font-weight: 800; letter-spacing: -0.04em; color: #fff; }
+    .vimflix-logo span { color: var(--vimflix-brand); }
+    #hero-row:empty::after, #trending-row:empty::after, #top-rated-grid:empty::after { content: ''; display: block; min-height: 120px; }
+  </style>
+</head>
+<body class="min-h-screen antialiased">
+  <header class="sticky top-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <a href="#" class="vimflix-logo text-lg sm:text-xl">Vim<span>flix</span></a>
+      <div class="flex items-center gap-2 flex-1 max-w-md sm:max-w-xl">
+        <div class="relative flex-1">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm" aria-hidden="true"></i>
+          <input type="text" id="search" placeholder="Search..."
+            class="w-full pl-9 pr-3 py-2 rounded-lg bg-white/10 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600/80 text-sm" autocomplete="off" />
+        </div>
+        <button type="button" id="search-btn" class="shrink-0 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors">
+          <i class="fas fa-search" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <select id="theme" class="px-2 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white text-xs focus:ring-2 focus:ring-red-600/80">
+          <option value="e50914">Red</option>
+          <option value="2196f3">Blue</option>
+          <option value="9146ff">Purple</option>
+        </select>
+        <label class="flex items-center gap-1.5 text-gray-500 cursor-pointer">
+          <input type="checkbox" id="autoplay" class="rounded border-gray-600 text-red-600 focus:ring-red-600" />
+          <span>Auto</span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-5">
+    <div id="player-area" class="hidden fixed z-40 bg-black rounded-xl overflow-hidden border border-white/10 shadow-2xl flex flex-col" style="top: 3.5rem; left: 0.75rem; right: 0.75rem; bottom: 0.75rem;">
+      <div class="flex items-center justify-between px-4 py-2 bg-zinc-900 shrink-0">
+        <span id="playing-title" class="font-medium text-sm truncate"></span>
+        <button type="button" id="close-player" class="text-gray-400 hover:text-white px-3 py-1.5 rounded hover:bg-white/10 text-sm shrink-0">
+          <i class="fas fa-times mr-1"></i>Close
+        </button>
+      </div>
+      <iframe id="player-iframe" class="w-full flex-1 min-h-0 border-0" allowfullscreen allow="autoplay; fullscreen" loading="lazy"></iframe>
+    </div>
+    <div id="player-backdrop" class="hidden fixed inset-0 z-30 bg-black/80" aria-hidden="true"></div>
+
+    <section class="mb-8">
+      <h2 class="section-title mb-3">Featured</h2>
+      <div id="hero-row" class="scroll-x flex gap-3 pb-2 -mx-0.5"></div>
+    </section>
+
+    <section class="mb-8">
+      <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+        <h2 class="section-title">Trending</h2>
+        <div class="flex rounded-lg bg-white/5 p-0.5">
+          <button type="button" data-trend="movies" class="tab-pill active px-3 py-1.5 rounded-md text-sm font-medium text-gray-400">Movies</button>
+          <button type="button" data-trend="tv" class="tab-pill px-3 py-1.5 rounded-md text-sm font-medium text-gray-400">Series</button>
+          <button type="button" data-trend="anime" class="tab-pill px-3 py-1.5 rounded-md text-sm font-medium text-gray-400">Anime</button>
+        </div>
+      </div>
+      <div id="trending-row" class="scroll-x flex gap-3 pb-2"></div>
+    </section>
+
+    <section class="mb-8">
+      <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+        <h2 class="section-title">Top rated</h2>
+        <div class="flex rounded-lg bg-white/5 p-0.5">
+          <button type="button" data-top="movies" class="tab-pill active px-3 py-1.5 rounded-md text-sm font-medium text-gray-400">Movies</button>
+          <button type="button" data-top="tv" class="tab-pill px-3 py-1.5 rounded-md text-sm font-medium text-gray-400">Series</button>
+        </div>
+      </div>
+      <div id="top-rated-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"></div>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="section-title mb-3">Genres</h2>
+      <div id="genre-pills" class="flex flex-wrap gap-2 mb-3"></div>
+      <div id="genre-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"></div>
+    </section>
+
+    <div id="tv-controls" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2 rounded-lg bg-zinc-800/95 border border-white/10 shadow-xl">
+      <label class="flex items-center gap-2 text-sm">
+        <span class="text-gray-400">S</span>
+        <input type="number" id="season" min="1" value="1" class="w-12 px-2 py-1 rounded bg-zinc-700 border border-white/10 text-white text-sm" />
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <span class="text-gray-400">E</span>
+        <input type="number" id="episode" min="1" value="1" class="w-12 px-2 py-1 rounded bg-zinc-700 border border-white/10 text-white text-sm" />
+      </label>
+    </div>
+  </main>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
